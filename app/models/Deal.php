@@ -16,10 +16,12 @@ class Deal extends Model
 
     public static function startBizproc($dealId)
     {
+        $crmDealId = 'DEAL_' . $dealId;
+
         return CRest::call('bizproc.workflow.start', [ // Запуск бизнес процесса
             'TEMPLATE_ID' => 246,
             'DOCUMENT_ID' => [
-                'crm', 'CCrmDocumentDeal', 'DEAL_' . $dealId
+                'crm', 'CCrmDocumentDeal', $crmDealId
             ],
         ]);
     }
@@ -34,14 +36,16 @@ class Deal extends Model
         ])['result'];
     }
 
-    public static function checkFolder($deal)
+    public static function checkFolder($dealId)
     {
-        if(empty($deal['UF_CRM_1722838734'])) {
-            $folderName = Contact::getContact($deal['CONTACT_ID']);
-        } else {
+        $deal = Deal::getDeal($dealId);
+
+        if(!empty($deal['UF_CRM_1722838734'])) {
             $folderName = Folder::getFolderNameFromUrl($deal['UF_CRM_1722838734']);
+        } else {
+            $folderName = Contact::getContact($deal['CONTACT_ID']);
         }
 
-        return Folder::getFolder($folderName);
+        return Folder::getFolder(403, $folderName);
     }
 }

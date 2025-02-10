@@ -3,24 +3,34 @@
 namespace App\controllers;
 
 use App\models\Deal;
+use App\Models\Folder;
 use App\Models\Task;
 
 class DealsController
 {
     public static function Deals()
     {
-        $dealId = Task::getTaskId();
-        preprint($dealId);
+        $dealIds = Task::getTaskId();
 
-        start:  // Метка
-        $deal = Deal::getDeal($dealId);
+        foreach ($dealIds as $key => $dealId) {
+            $search = Folder::where('task_data_id', $dealId->id)->get();
 
-        $folder = Deal::checkFolder($deal);
+            if (empty($search[0]->id)) {
+                $folder = Deal::checkFolder($dealId->uf_crm_id);
 
-        if (empty($folder)) {
-            Deal::startBizproc($dealId);
-            goto start; // Вернуться к метка
+                if (empty($folder)) {
+                    Deal::startBizproc($dealId->uf_crm_id);
+
+                    sleep(2);
+
+                    $folder = Deal::checkFolder($dealId->uf_crm_id);
+                }
+//                preprint($folder);
+
+                if (!empty($folder)) {
+                    Folder::taskFolderAdd($folder['ID'], $dealId);
+                }
+            }
         }
-
     }
 }
